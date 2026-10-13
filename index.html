@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>볼타 전지 만들기 (해 보기 실험)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@500;600;700&family=STIX+Two+Text:ital@0;1&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mint:#5dc2b0; --mint-deep:#23907f; --mint-soft:#e3f5f1;
+  --yellow:#f4c33b; --salmon:#e9966b; --num:#e8843a;
+  --ink:#231f20; --muted:#646b6c; --line:#d9dddc; --paper:#ffffff; --panel:#f5f8f7;
+  --stage:#fcfdfd;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#e9eeee; --muted:#a6aeaf; --line:#3a4345; --paper:#161b1d; --panel:#1f2629; --mint-soft:#1d3a35;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e9eeee; --muted:#a6aeaf; --line:#3a4345; --paper:#161b1d; --panel:#1f2629; --mint-soft:#1d3a35;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;overscroll-behavior:none;overflow:hidden;
+}
+.ch i{font-family:'STIX Two Text','Times New Roman',serif;font-style:italic;font-weight:500}
+.ch sub{font-size:.68em;line-height:0}
+
+.app{
+  height:100%;display:grid;
+  grid-template-columns:230px minmax(0,1fr);
+  grid-template-rows:auto auto minmax(0,1fr);
+  column-gap:24px;padding:12px 22px 14px;
+}
+
+.top{grid-column:1/-1;display:flex;align-items:center;height:68px}
+.badges{display:flex;align-items:center;flex:none}
+.b1,.b2{border-radius:50%;display:grid;place-items:center;font-weight:700;letter-spacing:-.02em}
+.b1{width:68px;height:68px;background:var(--mint);color:#fff;font-size:17px;position:relative;z-index:1}
+.b2{width:54px;height:54px;background:var(--yellow);color:#3b2f06;font-size:15px;margin-left:-10px}
+.dots{flex:0 0 76px;height:4px;margin:0 8px;background:radial-gradient(circle,#b9c0bf 1.6px,transparent 2.1px) 0 0/8px 4px repeat-x}
+.bar{flex:1;height:10px;border-radius:6px;background:var(--line);position:relative}
+.bar .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--mint);border-radius:6px;transition:width .6s ease}
+.bar::after{content:"";position:absolute;right:-4px;top:50%;width:14px;height:14px;border-radius:50%;background:var(--mint);transform:translateY(-50%)}
+.bar2{flex:0 0 130px;height:10px;border-radius:6px;background:var(--mint);margin-left:12px}
+
+.titlebox{grid-column:2;padding:4px 0 10px}
+h1{font-size:28px;font-weight:900;margin:0 0 6px;letter-spacing:-.03em}
+.goal{margin:0;font-family:'Noto Serif KR',serif;font-weight:500;font-size:17px}
+.goal b{font-family:'Noto Sans KR',sans-serif;font-weight:900;margin-right:12px}
+
+.side{grid-column:1;grid-row:2/4;position:relative;padding:6px 0 0 30px;overflow:auto}
+.side::before{content:"";position:absolute;left:4px;top:0;bottom:0;width:10px;border-radius:6px;background:var(--line)}
+.side h2{font-size:17px;font-weight:900;margin:8px 0 10px}
+.mats{list-style:none;margin:0 0 18px;padding:0}
+.mats li{display:flex;align-items:flex-start;gap:9px;font-size:16px;line-height:1.4;padding:5px 0}
+.box{flex:none;width:20px;height:20px;border:1.8px solid var(--ink);border-radius:3px;margin-top:2px;display:grid;place-items:center;transition:background .25s,border-color .25s}
+.mats li.got .box{background:var(--mint);border-color:var(--mint)}
+.mats li.got .box::after{content:"";width:10px;height:5px;border:2.6px solid #fff;border-top:0;border-right:0;transform:translate(0,-1px) rotate(-45deg)}
+.warn{border-top:1.5px dashed var(--line);padding-top:12px}
+.warn svg.tri{width:24px;height:22px;display:block;margin-bottom:6px}
+.warn ul{margin:0;padding:0;list-style:none}
+.warn li{font-size:14.5px;line-height:1.5;color:var(--ink);padding-left:12px;position:relative;margin-bottom:5px}
+.warn li::before{content:"";position:absolute;left:0;top:.65em;width:4px;height:4px;border-radius:50%;background:var(--ink)}
+.sicons{display:flex;gap:8px;margin-top:12px}
+.sico{width:40px;height:40px;border-radius:50%;border:2px solid var(--mint-deep);color:var(--mint-deep);display:grid;place-items:center;transition:background .3s,color .3s}
+.sico svg{width:26px;height:26px}
+.sico.on{background:var(--mint-deep);color:#fff}
+
+.main{grid-column:2;grid-row:3;display:flex;flex-direction:column;gap:12px;min-height:0}
+.stageWrap{flex:1;min-height:0;position:relative;background:var(--stage);border:1.5px solid var(--line);border-radius:22px;overflow:hidden}
+#stage{width:100%;height:100%;display:block;touch-action:none}
+.tools{position:absolute;top:12px;right:12px;display:flex;gap:8px}
+.chipbtn{min-height:48px;padding:0 18px;border-radius:24px;border:2px solid var(--mint);background:#fff;color:var(--mint-deep);font:700 16px 'Noto Sans KR',sans-serif;cursor:pointer}
+.chipbtn:disabled{opacity:.3;cursor:default}
+.chipbtn.ghost{border-color:#cfd6d5;color:#6a7273}
+.resetBtn{position:absolute;left:12px;bottom:12px}
+.chipbtn:focus-visible,.btn:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+.toast{position:absolute;top:14px;left:50%;transform:translate(-50%,-8px);opacity:0;pointer-events:none;
+  background:#fff;border:2px solid var(--mint);color:#1d6f63;font-weight:700;font-size:17px;
+  padding:10px 22px;border-radius:26px;transition:opacity .25s,transform .25s;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.guide{flex:none;display:flex;align-items:center;gap:20px;background:var(--panel);border-radius:20px;padding:14px 16px 14px 22px}
+.gLeft{flex:1;min-width:0}
+.tag{display:inline-block;background:var(--salmon);color:#fff;font-weight:700;font-size:15px;border-radius:14px;padding:3px 14px}
+.tag.mint{background:var(--mint)}
+.tag.gray{background:#98a2a2}
+.count{color:var(--muted);font-size:14px;margin-left:10px}
+.gText{margin:8px 0 3px;font-family:'Noto Serif KR',serif;font-weight:600;font-size:22px;line-height:1.45;display:flex;gap:12px}
+.num{font-family:'Noto Sans KR',sans-serif;font-weight:900;color:var(--num);font-size:24px;line-height:1.35;flex:none;min-width:18px}
+.gHint{margin:0 0 0 30px;color:var(--muted);font-size:15.5px;line-height:1.5}
+.btn{flex:none;min-height:62px;min-width:156px;border:0;border-radius:31px;font:700 19px 'Noto Sans KR',sans-serif;padding:0 26px;background:var(--line);color:var(--muted);cursor:pointer;transition:background .25s,color .25s}
+.btn.ready{background:var(--mint);color:#fff;animation:nudge 1.4s ease 2}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(93,194,176,.55)}60%{box-shadow:0 0 0 12px rgba(93,194,176,0)}}
+
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:92%;background:#fff;color:#231f20;border-top:1.5px solid #d9dddc;
+  border-radius:22px 22px 0 0;padding:18px 28px 22px;transform:translateY(105%);transition:transform .38s ease;overflow:auto;
+  box-shadow:0 -10px 28px rgba(0,0,0,.08)}
+.sheet.open{transform:none}
+.sheetHead{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.sheetHead .note{color:#646b6c;font-size:15px;flex:1}
+.qs{list-style:none;margin:0;padding:0}
+.qs li{margin:14px 0 6px}
+.q{display:flex;gap:12px;font-family:'Noto Serif KR',serif;font-weight:600;font-size:19px;line-height:1.5;margin:0}
+.q .num{font-size:20px}
+.q b{font-family:'Noto Sans KR',sans-serif;color:var(--num);font-weight:900}
+.wline{display:flex;align-items:center;gap:8px;margin:8px 0 0 30px}
+.wline span{flex:1;height:10px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10'%3E%3Cpath d='M0 5 Q4 1 8 5 T16 5' fill='none' stroke='%23b4bcbb' stroke-width='1.4'/%3E%3C/svg%3E") repeat-x}
+.wline svg{width:20px;height:20px;flex:none}
+
+[data-drag="1"]{cursor:grab}
+
+.shelfLab{font:500 15px 'Noto Sans KR',sans-serif;fill:#3b4042}
+.plab{font:700 15px 'Noto Sans KR',sans-serif;fill:#3b4042}
+.call{font:500 17px 'Noto Sans KR',sans-serif;fill:#231f20}
+.dialOpt{cursor:pointer}
+.dialOpt text{font:700 12px 'Noto Sans KR',sans-serif;fill:#9aa1a4}
+.dialOpt.on text{fill:#7fe3d1}
+.tile{cursor:pointer}
+.tile .tb{fill:#fff;stroke:#d5dcdb;stroke-width:2}
+.tile.on .tb{fill:#e3f5f1;stroke:#5dc2b0;stroke-width:3}
+.tile .tchk{display:none}
+.tile.on .tchk{display:inline}
+.tile text{font:700 22px 'Noto Sans KR',sans-serif;fill:#231f20}
+.slot{fill:rgba(93,194,176,.08);stroke:#5dc2b0;stroke-width:2;stroke-dasharray:6 5}
+.slot.hot{fill:rgba(93,194,176,.3)}
+.barLab{font:700 16px 'Noto Sans KR',sans-serif;fill:#231f20}
+.pct{font:500 14px 'Noto Sans KR',sans-serif;fill:#646b6c}
+
+@media (max-width:900px), (orientation:portrait){
+  .app{grid-template-columns:1fr;grid-template-rows:auto auto auto minmax(0,1fr);padding:10px 14px 12px}
+  .titlebox{grid-column:1}
+  .side{grid-column:1;grid-row:3;padding:0 0 8px;overflow:visible}
+  .side::before{display:none}
+  .side h2{display:none}
+  .mats{display:flex;flex-wrap:wrap;gap:2px 16px;margin:0}
+  .mats li{font-size:14.5px;padding:2px 0}
+  .warn{display:none}
+  .main{grid-column:1;grid-row:4}
+  .guide{flex-wrap:wrap}
+  .gText{font-size:19px}
+  .btn{min-height:54px}
+  .top{height:56px}
+  .b1{width:56px;height:56px;font-size:15px}.b2{width:46px;height:46px;font-size:13px}
+  .bar2{flex-basis:60px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="icCoat" viewBox="0 0 40 40"><path d="M13 5 L20 9 L27 5 L34 9 L37 22 L32 24 L30 18 V35 H10 V18 L8 24 L3 22 L6 9 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 9 V35 M14 22 h3" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+  <symbol id="icGoggle" viewBox="0 0 40 40"><path d="M5 14 H35 Q37.5 14 37.5 17 V24 Q37.5 28 33 28 H25 L22 24 H18 L15 28 H7 Q2.5 28 2.5 24 V17 Q2.5 14 5 14 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8 18 H16 M24 18 H32" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="icGlove" viewBox="0 0 40 40"><path d="M11 37 V21 L6 15 Q5 12 8 12 Q10 12 12 15 L14 18 V8 Q14 6 16.5 6 Q19 6 19 8 V17 V6 Q19 4 21.5 4 Q24 4 24 6 V17 V8 Q24 6 26.5 6 Q29 6 29 8 V26 Q29 32 26 37 Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/></symbol>
+  <symbol id="icPencil" viewBox="0 0 20 20"><path d="M3 17 L4 13 L13 4 L16 7 L7 16 Z" fill="none" stroke="#5dc2b0" stroke-width="1.6" stroke-linejoin="round"/><path d="M11.5 5.5 L14.5 8.5" stroke="#5dc2b0" stroke-width="1.6"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="top" aria-label="실험 진행 정도">
+    <div class="badges"><span class="b1">해 보기</span><span class="b2">실험</span></div>
+    <div class="dots"></div>
+    <div class="bar"><div class="fill" id="progFill"></div></div>
+    <div class="bar2"></div>
+  </header>
+
+  <div class="titlebox">
+    <h1>볼타 전지 만들기</h1>
+    <p class="goal"><b>목표</b>볼타 전지를 만들어 화학 전지의 원리를 알아보자.</p>
+  </div>
+
+  <aside class="side">
+    <h2>준비물</h2>
+    <ul class="mats">
+      <li data-k="cu"><span class="box"></span><span>구리(Cu)판</span></li>
+      <li data-k="zn"><span class="box"></span><span>아연(Zn)판</span></li>
+      <li data-k="bottle"><span class="box"></span><span class="ch">1.0 M 묽은 황산<br>(H<sub>2</sub>SO<sub>4</sub>(<i>aq</i>))</span></li>
+      <li data-k="coil"><span class="box"></span><span>집게 달린 전선</span></li>
+      <li data-k="meter"><span class="box"></span><span>멀티미터</span></li>
+      <li data-k="sand"><span class="box"></span><span>사포</span></li>
+    </ul>
+    <div class="warn">
+      <svg class="tri" viewBox="0 0 24 22" aria-label="주의"><path d="M12 2 L22.5 20 H1.5 Z" fill="none" stroke="#d8352a" stroke-width="2" stroke-linejoin="round"/><path d="M12 8 V14" stroke="#d8352a" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.3" fill="#d8352a"/></svg>
+      <ul>
+        <li>실험복, 보안경, 실험용 장갑을 착용한다.</li>
+        <li>금속판은 사포로 문질러 표면의 불순물을 제거한 후 사용한다.</li>
+        <li>시약이 피부나 옷에 묻지 않도록 주의한다.</li>
+        <li>실험 후 남은 용액은 폐수 처리 기준과 방법에 따라 처리한다.</li>
+      </ul>
+      <div class="sicons">
+        <span class="sico" data-k="coat" title="실험복"><svg><use href="#icCoat"/></svg></span>
+        <span class="sico" data-k="goggle" title="보안경"><svg><use href="#icGoggle"/></svg></span>
+        <span class="sico" data-k="glove" title="실험용 장갑"><svg><use href="#icGlove"/></svg></span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="stageWrap">
+      <svg id="stage" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" role="application" aria-label="볼타 전지 실험대">
+        <defs>
+          <linearGradient id="gZn" x1="0" x2="1"><stop offset="0" stop-color="#9aa6ab"/><stop offset=".35" stop-color="#e2e8ea"/><stop offset=".58" stop-color="#c4cdd1"/><stop offset="1" stop-color="#95a0a5"/></linearGradient>
+          <linearGradient id="gCu" x1="0" x2="1"><stop offset="0" stop-color="#ad5d38"/><stop offset=".35" stop-color="#eca781"/><stop offset=".6" stop-color="#d2865f"/><stop offset="1" stop-color="#a05232"/></linearGradient>
+          <linearGradient id="gLiquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe9f0" stop-opacity=".55"/><stop offset="1" stop-color="#b3dbe5" stop-opacity=".72"/></linearGradient>
+          <linearGradient id="gGlass" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".06" stop-color="#fff" stop-opacity=".75"/><stop offset=".12" stop-color="#fff" stop-opacity="0"/><stop offset=".9" stop-color="#fff" stop-opacity="0"/><stop offset=".95" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <pattern id="pSand" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#c9a260"/><circle cx="1.8" cy="2" r="1" fill="#a07b3b"/><circle cx="4.6" cy="4.4" r=".8" fill="#e3c68f"/></pattern>
+          <clipPath id="cpInner"><path d="M452 200 V454 Q452 467 466 467 H654 Q668 467 668 454 V200 Z"/></clipPath>
+          <clipPath id="cpBottle"><path d="M30 8 H60 V40 Q90 48 90 72 V142 Q90 150 82 150 H8 Q0 150 0 142 V72 Q0 48 30 40 Z"/></clipPath>
+        </defs>
+
+        <g id="world">
+          <rect x="-400" y="470" width="1800" height="400" fill="#edf2f1"/>
+          <line x1="-400" y1="470" x2="1400" y2="470" stroke="#cbd8d5" stroke-width="2"/>
+
+          <g id="shelf">
+            <rect x="24" y="14" width="952" height="172" rx="20" fill="#f4f9f8" stroke="#cfe3df" stroke-width="2" stroke-dasharray="8 6"/>
+            <g id="shelfLabels"></g>
+          </g>
+
+          <ellipse cx="560" cy="473" rx="128" ry="7" fill="#000" opacity=".06"/>
+          <path d="M450 200 V454 Q450 470 466 470 H654 Q670 470 670 454 V200 Z" fill="#e9f4f6" fill-opacity=".6"/>
+
+          <g id="slotGuides">
+            <rect class="slot" id="slot0" x="505" y="165" width="34" height="270" rx="2"/>
+            <rect class="slot" id="slot1" x="595" y="165" width="34" height="270" rx="2"/>
+          </g>
+
+          <g id="zn">
+            <rect x="-24" y="-12" width="82" height="300" fill="transparent"/>
+            <rect width="34" height="270" rx="2" fill="url(#gZn)" stroke="#7b878c" stroke-width="1.5"/>
+            <g id="znT"></g>
+            <text class="plab" x="17" y="296" text-anchor="middle">아연판</text>
+          </g>
+          <g id="cu">
+            <rect x="-24" y="-12" width="82" height="300" fill="transparent"/>
+            <rect width="34" height="270" rx="2" fill="url(#gCu)" stroke="#8a4a2e" stroke-width="1.5"/>
+            <g id="cuT"></g>
+            <text class="plab" x="17" y="296" text-anchor="middle">구리판</text>
+          </g>
+
+          <g clip-path="url(#cpInner)" pointer-events="none">
+            <rect id="liquid" x="450" y="464" width="220" height="0" fill="url(#gLiquid)"/>
+            <line id="surface" x1="450" x2="670" y1="464" y2="464" stroke="#8fc3cf" stroke-width="2" display="none"/>
+            <g id="bubbles"></g>
+          </g>
+
+          <g pointer-events="none">
+            <path d="M438 190 Q449 193 450 205 V454 Q450 470 466 470 H654 Q670 470 670 454 V205 Q671 193 682 190" fill="none" stroke="#8aa0a6" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+            <rect x="450" y="200" width="220" height="268" fill="url(#gGlass)"/>
+            <g stroke="#8aa0a6" stroke-width="1.6">
+              <line x1="456" x2="472" y1="414" y2="414"/><line x1="456" x2="466" y1="389" y2="389"/>
+              <line x1="456" x2="472" y1="364" y2="364"/><line x1="456" x2="466" y1="339" y2="339"/>
+              <line x1="456" x2="472" y1="314" y2="314"/><line x1="456" x2="466" y1="289" y2="289"/>
+              <line x1="456" x2="472" y1="264" y2="264"/><line x1="456" x2="466" y1="239" y2="239"/>
+              <line x1="456" x2="472" y1="214" y2="214"/>
+            </g>
+            <g font-family="Noto Sans KR, sans-serif" font-size="11" fill="#7b9097">
+              <text x="476" y="418">50</text><text x="476" y="368">100</text><text x="476" y="318">150</text><text x="476" y="268">200</text><text x="476" y="218">250 mL</text>
+            </g>
+          </g>
+          <g id="targetLine" pointer-events="none">
+            <line x1="456" x2="664" y1="314" y2="314" stroke="#23907f" stroke-width="2.5" stroke-dasharray="9 6"/>
+            <text x="686" y="319" font-family="Noto Sans KR, sans-serif" font-weight="700" font-size="16" fill="#23907f">여기까지</text>
+          </g>
+
+          <path id="stream" d="" stroke="#bfe2ea" stroke-width="7" stroke-linecap="round" fill="none" opacity=".9" display="none" pointer-events="none"/>
+          <g id="callouts" pointer-events="none"></g>
+
+          <g id="waste" transform="translate(826 318)">
+            <rect x="-10" y="-10" width="150" height="170" fill="transparent"/>
+            <path d="M16 22 H114 L122 140 Q122 152 110 152 H20 Q8 152 8 140 Z" fill="#e2e9e8" stroke="#8aa0a6" stroke-width="2.5"/>
+            <rect x="40" y="6" width="50" height="18" rx="4" fill="#cfd8d6" stroke="#8aa0a6" stroke-width="2"/>
+            <rect x="26" y="58" width="78" height="46" rx="6" fill="#fff" stroke="#c7cfce"/>
+            <text x="65" y="88" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-weight="700" font-size="18" fill="#231f20">폐수통</text>
+          </g>
+
+          <g id="coil">
+            <rect width="110" height="70" fill="transparent"/>
+            <ellipse cx="44" cy="44" rx="34" ry="20" fill="none" stroke="#242424" stroke-width="5"/>
+            <ellipse cx="64" cy="38" rx="34" ry="20" fill="none" stroke="#d8352a" stroke-width="5"/>
+            <rect x="4" y="14" width="12" height="20" rx="4" fill="#242424"/>
+            <rect x="94" y="8" width="12" height="20" rx="4" fill="#d8352a"/>
+          </g>
+
+          <g id="sand">
+            <rect width="80" height="46" fill="transparent"/>
+            <rect y="4" width="80" height="42" rx="3" fill="url(#pSand)" stroke="#9c773a" stroke-width="1.5"/>
+          </g>
+
+          <g id="meter">
+            <rect width="190" height="230" rx="24" fill="#f2a41c" stroke="#c9820c" stroke-width="2"/>
+            <rect x="12" y="12" width="166" height="206" rx="16" fill="#2c2f31"/>
+            <rect id="lcdBg" x="25" y="24" width="140" height="56" rx="6" fill="#7f8a78"/>
+            <text id="lcdMode" x="33" y="41" font-family="'Share Tech Mono', monospace" font-size="12" fill="#1d2418"></text>
+            <text id="lcdVal" x="136" y="71" text-anchor="end" font-family="'Share Tech Mono', monospace" font-size="36" fill="#18200f"></text>
+            <text id="lcdUnit" x="140" y="71" font-family="'Share Tech Mono', monospace" font-size="18" fill="#18200f"></text>
+            <circle id="knob" cx="95" cy="140" r="30" fill="#141516" stroke="#4d5255" stroke-width="3"/>
+            <line id="dialPtr" x1="95" y1="140" x2="95" y2="114" stroke="#fff" stroke-width="5" stroke-linecap="round" pointer-events="none"/>
+            <g class="dialOpt" data-mode="OFF"><circle cx="95" cy="93" r="21" fill="transparent"/><text x="95" y="98" text-anchor="middle">OFF</text></g>
+            <g class="dialOpt" data-mode="DC"><circle cx="147" cy="120" r="23" fill="transparent"/><text x="147" y="124" text-anchor="middle">DCV</text></g>
+            <g class="dialOpt" data-mode="AC"><circle cx="43" cy="120" r="23" fill="transparent"/><text x="43" y="124" text-anchor="middle">ACV</text></g>
+            <text x="65" y="188" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="10" font-weight="700" fill="#cfd3d5">COM</text>
+            <text x="125" y="188" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="10" font-weight="700" fill="#f08a82">V</text>
+            <circle cx="65" cy="200" r="9" fill="#0b0b0b" stroke="#8a8f92" stroke-width="2.5"/>
+            <circle cx="125" cy="200" r="9" fill="#0b0b0b" stroke="#e0463c" stroke-width="3"/>
+          </g>
+
+          <g id="leads">
+            <path id="wire-black" fill="none" stroke="#242424" stroke-width="5" stroke-linecap="round"/>
+            <path id="wire-red" fill="none" stroke="#d8352a" stroke-width="5" stroke-linecap="round"/>
+            <g id="clip-black">
+              <circle cy="-24" r="32" fill="transparent"/>
+              <rect x="-8" y="-54" width="16" height="24" rx="5" fill="#242424"/>
+              <path d="M-9 -32 H9 L6 -8 L0 2 L-6 -8 Z" fill="#bcc3c6" stroke="#737b7f" stroke-width="1.2"/>
+            </g>
+            <g id="clip-red">
+              <circle cy="-24" r="32" fill="transparent"/>
+              <rect x="-8" y="-54" width="16" height="24" rx="5" fill="#d8352a"/>
+              <path d="M-9 -32 H9 L6 -8 L0 2 L-6 -8 Z" fill="#bcc3c6" stroke="#737b7f" stroke-width="1.2"/>
+            </g>
+          </g>
+
+          <g id="bottle">
+            <rect x="-14" y="-6" width="118" height="164" fill="transparent"/>
+            <g clip-path="url(#cpBottle)"><rect x="0" y="66" width="90" height="90" fill="#bfe0e8" opacity=".75"/></g>
+            <path d="M30 8 H60 V40 Q90 48 90 72 V142 Q90 150 82 150 H8 Q0 150 0 142 V72 Q0 48 30 40 Z" fill="#e8f3f5" fill-opacity=".35" stroke="#8aa0a6" stroke-width="2.5" stroke-linejoin="round"/>
+            <rect x="11" y="84" width="68" height="46" rx="3" fill="#fff" stroke="#c9d0cf"/>
+            <text x="45" y="102" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-weight="700" font-size="13" fill="#231f20">1.0 M</text>
+            <text x="45" y="121" text-anchor="middle" font-family="'STIX Two Text', serif" font-size="13" fill="#231f20">H<tspan font-size="9" dy="3">2</tspan><tspan dy="-3">SO</tspan><tspan font-size="9" dy="3">4</tspan><tspan dy="-3">(</tspan><tspan font-style="italic">aq</tspan>)</text>
+          </g>
+        </g>
+
+        <g id="safety">
+          <rect x="-400" y="-200" width="1800" height="1000" fill="#fcfdfd"/>
+          <g class="tile" data-k="coat" transform="translate(170 170)">
+            <rect class="tb" width="200" height="240" rx="22"/>
+            <use href="#icCoat" x="40" y="30" width="120" height="120" color="#231f20"/>
+            <text x="100" y="200" text-anchor="middle">실험복</text>
+            <g class="tchk"><circle cx="176" cy="24" r="16" fill="#5dc2b0"/><path d="M168 24 l6 6 l10 -12" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+          </g>
+          <g class="tile" data-k="goggle" transform="translate(400 170)">
+            <rect class="tb" width="200" height="240" rx="22"/>
+            <use href="#icGoggle" x="40" y="30" width="120" height="120" color="#231f20"/>
+            <text x="100" y="200" text-anchor="middle">보안경</text>
+            <g class="tchk"><circle cx="176" cy="24" r="16" fill="#5dc2b0"/><path d="M168 24 l6 6 l10 -12" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+          </g>
+          <g class="tile" data-k="glove" transform="translate(630 170)">
+            <rect class="tb" width="200" height="240" rx="22"/>
+            <use href="#icGlove" x="40" y="30" width="120" height="120" color="#231f20"/>
+            <text x="100" y="200" text-anchor="middle">실험용 장갑</text>
+            <g class="tchk"><circle cx="176" cy="24" r="16" fill="#5dc2b0"/><path d="M168 24 l6 6 l10 -12" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+          </g>
+        </g>
+
+        <g id="sanding">
+          <rect x="-400" y="-200" width="1800" height="1000" fill="#fcfdfd"/>
+          <g transform="translate(290 60)">
+            <rect width="120" height="380" rx="4" fill="url(#gZn)" stroke="#7b878c" stroke-width="2"/>
+            <g id="bigZnT"></g>
+          </g>
+          <g transform="translate(530 60)">
+            <rect width="120" height="380" rx="4" fill="url(#gCu)" stroke="#8a4a2e" stroke-width="2"/>
+            <g id="bigCuT"></g>
+          </g>
+          <rect x="290" y="458" width="120" height="10" rx="5" fill="#dfe4e3"/>
+          <rect id="barZn" x="290" y="458" width="0" height="10" rx="5" fill="#5dc2b0"/>
+          <rect x="530" y="458" width="120" height="10" rx="5" fill="#dfe4e3"/>
+          <rect id="barCu" x="530" y="458" width="0" height="10" rx="5" fill="#5dc2b0"/>
+          <text class="barLab" x="350" y="500" text-anchor="middle">아연판</text>
+          <text class="barLab" x="590" y="500" text-anchor="middle">구리판</text>
+          <text class="pct" id="pctZn" x="350" y="524" text-anchor="middle">0%</text>
+          <text class="pct" id="pctCu" x="590" y="524" text-anchor="middle">0%</text>
+          <g id="sandBig">
+            <rect x="-10" y="-10" width="170" height="130" fill="transparent"/>
+            <rect width="150" height="110" rx="6" fill="url(#pSand)" stroke="#9c773a" stroke-width="2"/>
+          </g>
+        </g>
+      </svg>
+
+      <div class="tools">
+        <button class="chipbtn" id="btnSheet" hidden>결과 및 정리</button>
+        <button class="chipbtn" id="btnZoom" disabled>확대해서 보기</button>
+      </div>
+      <button class="chipbtn ghost resetBtn" id="btnReset">처음부터</button>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+      <div class="sheet" id="sheet">
+        <div class="sheetHead">
+          <span class="tag mint">결과 및 정리</span>
+          <span class="note">답은 교과서에 기록하자.</span>
+          <button class="chipbtn" id="btnCloseSheet">장치 다시 보기</button>
+        </div>
+        <ol class="qs">
+          <li><p class="q"><span class="num">1</span><span>과정 <b>1</b>, <b>2</b>에서 기포가 발생하는 금속은 무엇인가? 그 까닭은 무엇인가?</span></p>
+            <div class="wline"><span></span><svg><use href="#icPencil"/></svg></div></li>
+          <li><p class="q"><span class="num">2</span><span>위 화학 반응을 산화·환원 반응식으로 써 보자.</span></p>
+            <div class="wline"><span></span><svg><use href="#icPencil"/></svg></div></li>
+          <li><p class="q"><span class="num">3</span><span>과정 <b>2</b>에서 측정한 전압은 얼마인가? 볼타 전지에서 전류가 흐르는 까닭은 무엇인가?</span></p>
+            <div class="wline"><span></span><svg><use href="#icPencil"/></svg></div></li>
+        </ol>
+      </div>
+    </div>
+
+    <section class="guide" aria-live="polite">
+      <div class="gLeft">
+        <div><span class="tag gray" id="gTag">준비</span><span class="count" id="gCount">1 / 10</span></div>
+        <p class="gText"><span class="num" id="gNum">1</span><span id="gBody"></span></p>
+        <p class="gHint" id="gHint"></p>
+      </div>
+      <button class="btn" id="btnNext" aria-disabled="true">다음 단계</button>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+'use strict';
+/* ───── 교사용 설정값 ───── */
+const CFG = {
+  voltage: 0.76,     // 멀티미터에 표시되는 전압(V)
+  target: 150,       // 붓는 황산의 양(눈금 mL)
+  znOpen: 2.4,       // 전선 연결 전 아연판 기포 발생 빈도(개/초)
+  znClosed: 1.2,     // 연결 후 아연판 기포 발생 빈도(개/초) — 0으로 두면 연결 후 아연판 기포 없음
+  cuClosed: 7,       // 연결 후 구리판 기포 발생 빈도(개/초)
+  rubNeed: 2400      // 사포질에 필요한 문지름 거리 (기존 1400)
+};
+
+const $ = id => document.getElementById(id);
+const NS = 'http://www.w3.org/2000/svg';
+const svg = $('stage');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+const SLOTS = [505, 595], PTOP = 165, PW = 34, BOT = 464;
+const JACK = { black: { x: 135, y: 435 }, red: { x: 195, y: 435 } };
+const REST = { black: { x: 300, y: 462 }, red: { x: 345, y: 462 } };
+const POUR = { x: 672, y: 44, r: -115, s: 1 };
+const MOUTH = { x: 638, y: 178 };
+
+const OBJ = {
+  cu:     { w: 34,  h: 270, home: { x: 752, y: 200, s: 1, r: 0 } },
+  zn:     { w: 34,  h: 270, home: { x: 700, y: 200, s: 1, r: 0 } },
+  bottle: { w: 90,  h: 150, home: { x: 815, y: 320, s: 1, r: 0 }, cx: 45, cy: 95 },
+  coil:   { w: 110, h: 70,  home: { x: 262, y: 400, s: 1, r: 0 } },
+  meter:  { w: 190, h: 230, home: { x: 70,  y: 235, s: 1, r: 0 } },
+  sand:   { w: 80,  h: 46,  home: { x: 905, y: 424, s: 1, r: 0 } }
+};
+const SHELF = ['cu', 'zn', 'bottle', 'coil', 'meter', 'sand'];
+const SHELF_S = { cu: .42, zn: .42, bottle: .72, coil: 1, meter: .5, sand: 1.3 };
+const NAMES = { cu: '구리(Cu)판', zn: '아연(Zn)판', bottle: '1.0 M 묽은 황산', coil: '집게 달린 전선', meter: '멀티미터', sand: '사포' };
+
+const CH = {
+  acid: '<span class="ch">1.0 M H<sub>2</sub>SO<sub>4</sub>(<i>aq</i>)</span>',
+  zn: '<span class="ch">Zn(<i>s</i>)</span>',
+  cu: '<span class="ch">Cu(<i>s</i>)</span>'
+};
+const STEPS = [null,
+  { tag: '준비', cls: 'gray', text: '실험복, 보안경, 실험용 장갑을 착용한다.', hint: '세 가지를 모두 눌러서 착용하자.', ok: '안전 장비를 모두 착용했다.' },
+  { tag: '준비', cls: 'gray', text: '준비물을 실험대 위로 옮긴다.', hint: '바구니 안의 준비물을 하나씩 눌러 보자.', ok: '준비물을 모두 옮겼다.' },
+  { tag: '준비', cls: 'gray', text: '사포로 금속판을 문질러 표면의 불순물을 제거한다.', hint: '사포를 끌어서 두 금속판 위를 여러 번 문질러 보자.', ok: '두 금속판의 표면이 깨끗해졌다.' },
+  { tag: '과정 1', cls: '', text: `비커에 ${CH.acid}을 점선까지 붓는다.`, hint: '시약병을 비커 위로 끌어온 채로 누르고 있으면 용액이 부어진다.', ok: '묽은 황산을 알맞게 부었다.' },
+  { tag: '과정 1', cls: '', text: `${CH.zn} 판과 ${CH.cu} 판을 서로 닿지 않게 비커에 넣는다.`, hint: '금속판을 끌어서 비커 안의 점선 자리에 놓자.', ok: '두 금속판을 비커에 넣었다.' },
+  { tag: '과정 1', cls: '', text: '각 금속 표면을 관찰한다.', hint: '오른쪽 위의 [확대해서 보기]를 눌러 두 금속판 표면을 자세히 살펴보자.', ok: '관찰한 내용을 기억해 두자.' },
+  { tag: '과정 2', cls: '', text: `과정 1의 ${CH.zn} 판과 ${CH.cu} 판을 집게 달린 전선으로 멀티미터에 연결한다.`, hint: '검은색 집게와 빨간색 집게를 끌어서 두 금속판의 윗부분에 하나씩 물리자.', ok: '두 금속판을 멀티미터에 연결했다.' },
+  { tag: '과정 2', cls: '', text: '멀티미터 다이얼을 DCV(직류 전압)에 맞추고 전압을 측정한다.', hint: '다이얼 옆의 DCV를 눌러 보자. [확대해서 보기]로 금속 표면도 다시 관찰하자.', ok: '측정한 전압을 확인했다.' },
+  { tag: '결과 및 정리', cls: 'mint', text: '결과 및 정리를 교과서에 기록한다.', hint: '다이얼을 OFF로 돌리거나 집게를 떼어 보면서 다시 비교할 수 있다.', ok: '' },
+  { tag: '뒷정리', cls: 'gray', text: '실험이 끝나면 남은 용액을 폐수통에 모은다.', hint: '폐수통을 눌러서 정리하자.', ok: '뒷정리를 마쳤다.' }
+];
+
+const S = {
+  step: 1, done: false, finished: false,
+  worn: {}, got: {},
+  dirt: { zn: 1, cu: 1 }, rub: { zn: 0, cu: 0 },
+  level: 0, pouring: false, draining: false,
+  inB: { zn: null, cu: null },
+  clip: { black: { ...REST.black, on: null }, red: { ...REST.red, on: null } },
+  dial: 'OFF', zoom: false, obs: 0, read: 0
+};
+const pos = {};
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function apply(id) {
+  const p = pos[id], o = OBJ[id];
+  $(id).setAttribute('transform',
+    `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${(p.r || 0).toFixed(2)} ${o.cx || 0} ${o.cy || 0}) scale(${p.s})`);
+}
+function animate(ms, fn, done) {
+  if (reduce) ms = 1;
+  const t0 = performance.now();
+  function f(t) {
+    const k = Math.min(1, (t - t0) / ms);
+    fn(1 - Math.pow(1 - k, 3));
+    if (k < 1) requestAnimationFrame(f); else if (done) done();
+  }
+  requestAnimationFrame(f);
+}
+function tweenPos(id, to, ms = 450, done) {
+  const from = { ...pos[id] };
+  animate(ms, e => {
+    for (const k in to) pos[id][k] = (from[k] || 0) + (to[k] - (from[k] || 0)) * e;
+    apply(id);
+  }, done);
+}
+function pt(e) {
+  const p = svg.createSVGPoint();
+  p.x = e.clientX; p.y = e.clientY;
+  return p.matrixTransform(svg.getScreenCTM().inverse());
+}
+function drag(node, h) {
+  node.addEventListener('pointerdown', e => {
+    if (!h.can()) return;
+    e.preventDefault(); e.stopPropagation();
+    try { node.setPointerCapture(e.pointerId); } catch (_) {}
+    h.start(pt(e));
+    const mv = ev => h.move(pt(ev));
+    const up = ev => {
+      node.removeEventListener('pointermove', mv);
+      node.removeEventListener('pointerup', up);
+      node.removeEventListener('pointercancel', up);
+      h.end(pt(ev));
+    };
+    node.addEventListener('pointermove', mv);
+    node.addEventListener('pointerup', up);
+    node.addEventListener('pointercancel', up);
+  });
+}
+function show(id, v) { $(id).style.display = v ? '' : 'none'; }
+let toastT;
+function toast(msg) {
+  if (!msg) return;
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ───── 금속판 표면의 산화막·녹 ───── */
+function rng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+function makeTarnish(g, w, h, metal, seed) {
+  const r = rng(seed);
+  el('rect', { width: w, height: h, rx: 2, fill: metal === 'zn' ? '#a4adb0' : '#6a3d2a', opacity: metal === 'zn' ? .55 : .5 }, g);
+  const n = Math.round(w * h / 900) + 8;
+  for (let i = 0; i < n; i++) {
+    const rx = (.08 + r() * .2) * w, ry = (.02 + r() * .07) * h;
+    const col = metal === 'zn' ? (r() < .5 ? '#f0f2f0' : '#7c878a') : (r() < .5 ? '#3c2317' : '#80543a');
+    el('ellipse', { cx: rx + r() * (w - 2 * rx), cy: ry + r() * (h - 2 * ry), rx, ry, fill: col, opacity: (.35 + r() * .4).toFixed(2) }, g);
+  }
+}
+makeTarnish($('znT'), 34, 270, 'zn', 11);
+makeTarnish($('cuT'), 34, 270, 'cu', 29);
+makeTarnish($('bigZnT'), 120, 380, 'zn', 11);
+makeTarnish($('bigCuT'), 120, 380, 'cu', 29);
+function renderDirt() {
+  $('znT').setAttribute('opacity', S.dirt.zn); $('bigZnT').setAttribute('opacity', S.dirt.zn);
+  $('cuT').setAttribute('opacity', S.dirt.cu); $('bigCuT').setAttribute('opacity', S.dirt.cu);
+  $('barZn').setAttribute('width', 120 * (1 - S.dirt.zn));
+  $('barCu').setAttribute('width', 120 * (1 - S.dirt.cu));
+  $('pctZn').textContent = Math.round((1 - S.dirt.zn) * 100) + '%';
+  $('pctCu').textContent = Math.round((1 - S.dirt.cu) * 100) + '%';
+}
+
+/* ───── 준비물 바구니 ───── */
+SHELF.forEach((id, i) => {
+  const o = OBJ[id], s = SHELF_S[id], cx = 110 + i * 156;
+  pos[id] = { x: cx - o.w * s / 2, y: 152 - o.h * s, s, r: 0 };
+  apply(id);
+  const t = el('text', { x: cx, y: 176, 'text-anchor': 'middle', class: 'shelfLab', id: 'lab-' + id }, $('shelfLabels'));
+  t.textContent = NAMES[id];
+  $(id).addEventListener('click', () => {
+    if (S.step !== 2 || S.got[id]) return;
+    S.got[id] = true;
+    $('lab-' + id).style.display = 'none';
+    document.querySelector(`.mats li[data-k="${id}"]`).classList.add('got');
+    tweenPos(id, { ...o.home }, 520, refreshLabels);
+    if (SHELF.every(k => S.got[k])) complete();
+  });
+});
+function refreshLabels() {
+  ['zn', 'cu'].forEach(id => {
+    const v = S.got[id] && S.inB[id] == null && S.step >= 2;
+    $(id).querySelector('.plab').style.display = v ? '' : 'none';
+  });
+}
+
+/* ───── 1단계: 안전 장비 ───── */
+document.querySelectorAll('.tile').forEach(t => t.addEventListener('click', () => {
+  if (S.step !== 1) return;
+  const k = t.dataset.k;
+  S.worn[k] = true;
+  t.classList.add('on');
+  document.querySelector(`.sico[data-k="${k}"]`).classList.add('on');
+  if (['coat', 'goggle', 'glove'].every(x => S.worn[x])) complete();
+}));
+
+/* ───── 3단계: 사포질 ───── */
+const SB_HOME = { x: 760, y: 250 };
+const sb = { ...SB_HOME };
+const BIG = { zn: { x: 290, y: 60 }, cu: { x: 530, y: 60 } };
+function placeSB() { $('sandBig').setAttribute('transform', `translate(${sb.x} ${sb.y})`); }
+(() => {
+  let off, prev;
+  drag($('sandBig'), {
+    can: () => S.step === 3 && !S.done,
+    start(p) { off = { x: p.x - sb.x, y: p.y - sb.y }; prev = p; },
+    move(p) {
+      sb.x = clamp(p.x - off.x, 10, 840); sb.y = clamp(p.y - off.y, 10, 480); placeSB();
+      const d = Math.hypot(p.x - prev.x, p.y - prev.y); prev = p;
+      const cx = sb.x + 75, cy = sb.y + 55;
+      for (const m of ['zn', 'cu']) {
+        const b = BIG[m];
+        if (cx > b.x - 45 && cx < b.x + 165 && cy > b.y && cy < b.y + 380 && S.dirt[m] > 0) {
+          S.rub[m] += d;
+          S.dirt[m] = Math.max(0, 1 - S.rub[m] / CFG.rubNeed);
+          renderDirt();
+        }
+      }
+      if (S.dirt.zn === 0 && S.dirt.cu === 0) complete();
+    },
+    end() {
+      if (S.done) { const f = { ...sb }; animate(400, e => { sb.x = f.x + (SB_HOME.x - f.x) * e; sb.y = f.y + (SB_HOME.y - f.y) * e; placeSB(); }); }
+    }
+  });
+})();
+
+/* ───── 4단계: 황산 붓기 ───── */
+drag($('bottle'), {
+  can: () => S.step === 4,
+  start() {},
+  move(p) {
+    const over = p.x > 420 && p.x < 770 && p.y > 30 && p.y < 340;
+    if (over) { Object.assign(pos.bottle, POUR); S.pouring = S.level < CFG.target; }
+    else { S.pouring = false; pos.bottle.r = 0; pos.bottle.x = p.x - 45; pos.bottle.y = p.y - 80; }
+    apply('bottle');
+  },
+  end() { S.pouring = false; tweenPos('bottle', { ...OBJ.bottle.home }, 420); }
+});
+function drawLiquid() {
+  const y = BOT - S.level;
+  $('liquid').setAttribute('y', y);
+  $('liquid').setAttribute('height', S.level > 0 ? S.level + 4 : 0);
+  const s = $('surface');
+  s.setAttribute('y1', y); s.setAttribute('y2', y);
+  s.setAttribute('display', S.level > 1 ? '' : 'none');
+}
+
+/* ───── 5단계: 금속판 넣기 ───── */
+['zn', 'cu'].forEach(id => {
+  let off;
+  drag($(id), {
+    can: () => S.step === 5 && S.inB[id] == null,
+    start(p) { off = { x: p.x - pos[id].x, y: p.y - pos[id].y }; },
+    move(p) {
+      pos[id].x = p.x - off.x; pos[id].y = p.y - off.y; apply(id);
+      const cx = pos[id].x + 17;
+      [0, 1].forEach(i => $('slot' + i).classList.toggle('hot',
+        !Object.values(S.inB).includes(i) && Math.abs(SLOTS[i] + 17 - cx) < 45 && pos[id].y < 330));
+    },
+    end() {
+      [0, 1].forEach(i => $('slot' + i).classList.remove('hot'));
+      const cx = pos[id].x + 17, cy = pos[id].y + 135;
+      if (cx > 430 && cx < 700 && cy > 120 && cy < 500) {
+        const used = Object.values(S.inB);
+        const free = [0, 1].filter(i => !used.includes(i))
+          .sort((a, b) => Math.abs(SLOTS[a] + 17 - cx) - Math.abs(SLOTS[b] + 17 - cx));
+        S.inB[id] = free[0];
+        tweenPos(id, { x: SLOTS[free[0]], y: PTOP, s: 1, r: 0 }, 320, drawCallouts);
+        refreshLabels(); setDragMarks();
+        if (S.inB.zn != null && S.inB.cu != null) complete();
+      } else tweenPos(id, { ...OBJ[id].home });
+    }
+  });
+});
+function drawCallouts() {
+  const g = $('callouts');
+  g.innerHTML = '';
+  if (S.inB.zn == null || S.inB.cu == null) return;
+  ['zn', 'cu'].forEach(id => {
+    const name = id === 'zn' ? '아연판' : '구리판';
+    if (S.inB[id] === 0) {
+      el('line', { x1: SLOTS[0] + 10, y1: 380, x2: 404, y2: 380, stroke: '#231f20', 'stroke-width': 1.3 }, g);
+      el('text', { x: 398, y: 386, 'text-anchor': 'end', class: 'call' }, g).textContent = name;
+    } else {
+      el('line', { x1: SLOTS[1] + 24, y1: 250, x2: 718, y2: 250, stroke: '#231f20', 'stroke-width': 1.3 }, g);
+      el('text', { x: 724, y: 256, class: 'call' }, g).textContent = name;
+    }
+  });
+}
+
+/* ───── 7~9단계: 전선과 집게 ───── */
+function drawWire(c) {
+  const j = JACK[c], k = S.clip[c], ty = k.y - 52;
+  const c2 = ty - clamp((j.y - ty) * .5 + 60, 40, 170);
+  $('wire-' + c).setAttribute('d', `M${j.x} ${j.y} C${j.x} ${j.y + 70} ${k.x} ${c2} ${k.x} ${ty}`);
+}
+function placeClip(c) {
+  const k = S.clip[c];
+  $('clip-' + c).setAttribute('transform', `translate(${k.x.toFixed(1)} ${k.y.toFixed(1)})`);
+  drawWire(c);
+}
+function moveClip(c, to) {
+  const k = S.clip[c], fx = k.x, fy = k.y;
+  animate(300, e => { k.x = fx + (to.x - fx) * e; k.y = fy + (to.y - fy) * e; placeClip(c); });
+}
+['black', 'red'].forEach(c => {
+  let off;
+  drag($('clip-' + c), {
+    can: () => S.step >= 7 && S.step <= 9,
+    start(p) { S.clip[c].on = null; off = { x: p.x - S.clip[c].x, y: p.y - S.clip[c].y }; lcdRefresh(); },
+    move(p) {
+      S.clip[c].x = clamp(p.x - off.x, 20, 980);
+      S.clip[c].y = clamp(p.y - off.y, 80, 470);
+      placeClip(c);
+    },
+    end() {
+      const k = S.clip[c];
+      let hit = null;
+      for (const id of ['zn', 'cu']) {
+        const sl = S.inB[id]; if (sl == null) continue;
+        const px = SLOTS[sl];
+        if (k.x > px - 36 && k.x < px + PW + 36 && k.y > 105 && k.y < 270) hit = id;
+      }
+      if (hit) {
+        const other = c === 'black' ? 'red' : 'black';
+        const dx = S.clip[other].on === hit ? (c === 'black' ? -9 : 9) : 0;
+        k.on = hit;
+        moveClip(c, { x: SLOTS[S.inB[hit]] + 17 + dx, y: 172 });
+      } else moveClip(c, REST[c]);
+      lcdRefresh();
+      if (S.step === 7 && circuit()) complete();
+    }
+  });
+});
+function circuit() {
+  const b = S.clip.black.on, r = S.clip.red.on;
+  if (!b || !r || b === r || S.level <= 0) return 0;
+  return r === 'cu' ? 1 : -1;
+}
+function closed() { return circuit() !== 0 && S.dial !== 'OFF'; }
+
+/* ───── 멀티미터 ───── */
+const DIAL = { OFF: -90, DC: -21, AC: -159 };
+const ORDER = ['OFF', 'DC', 'AC'];
+let lastSign = 0;
+function setDial(m) {
+  S.dial = m;
+  const a = DIAL[m] * Math.PI / 180;
+  $('dialPtr').setAttribute('x2', (95 + 26 * Math.cos(a)).toFixed(1));
+  $('dialPtr').setAttribute('y2', (140 + 26 * Math.sin(a)).toFixed(1));
+  document.querySelectorAll('.dialOpt').forEach(o => o.classList.toggle('on', o.dataset.mode === m));
+  lcdRefresh();
+}
+function dialAllowed() {
+  if (S.step >= 7 && S.step <= 9) return true;
+  if (S.step < 7) toast('아직 멀티미터를 사용할 차례가 아니다.');
+  return false;
+}
+document.querySelectorAll('.dialOpt').forEach(o => o.addEventListener('click', () => { if (dialAllowed()) setDial(o.dataset.mode); }));
+$('knob').addEventListener('click', () => { if (dialAllowed()) setDial(ORDER[(ORDER.indexOf(S.dial) + 1) % 3]); });
+function lcdRefresh() {
+  const bg = $('lcdBg'), v = $('lcdVal'), mo = $('lcdMode'), u = $('lcdUnit');
+  lastSign = 0;
+  if (S.dial === 'OFF') { bg.setAttribute('fill', '#7f8a78'); v.textContent = ''; mo.textContent = ''; u.textContent = ''; return; }
+  bg.setAttribute('fill', '#bccaa7'); u.textContent = 'V';
+  if (S.dial === 'AC') { mo.textContent = 'AC'; v.textContent = '0.00'; return; }
+  mo.textContent = 'DC';
+  const s = circuit();
+  if (!s) { v.textContent = '0.00'; return; }
+  lastSign = s;
+  const val = CFG.voltage + (Math.random() - .5) * .012;
+  v.textContent = (s < 0 ? '-' : '') + val.toFixed(2);
+}
+
+/* ───── 기포 ───── */
+const bubbles = [];
+const acc = { zn: 0, cu: 0 };
+function spawn(id) {
+  if (bubbles.length > 190) return;
+  const sx = SLOTS[S.inB[id]], surf = BOT - S.level;
+  const y0 = Math.max(surf + 8, PTOP + 4), y1 = PTOP + 266;
+  if (y1 - y0 < 6) return;
+  const rmax = id === 'zn' ? 2.2 + Math.random() * 2.4 : 1.5 + Math.random() * 2;
+  const b = {
+    x: sx + 3 + Math.random() * 28, y: y0 + Math.random() * (y1 - y0),
+    r: .6, rmax, grow: .45 + Math.random() * .9, age: 0, vy: 0, wob: Math.random() * 6.28
+  };
+  b.node = el('circle', { cx: b.x, cy: b.y, r: b.r, fill: 'rgba(255,255,255,.6)', stroke: 'rgba(96,130,140,.85)', 'stroke-width': .9 }, $('bubbles'));
+  bubbles.push(b);
+}
+function clearBubbles() { bubbles.forEach(b => b.node.remove()); bubbles.length = 0; }
+function updateBubbles(dt) {
+  if (S.level > 2 && !S.draining) {
+    const on = closed();
+    const rate = {
+      zn: S.inB.zn != null ? (on ? CFG.znClosed : CFG.znOpen) : 0,
+      cu: S.inB.cu != null && on ? CFG.cuClosed : 0
+    };
+    for (const id of ['zn', 'cu']) {
+      acc[id] += rate[id] * dt;
+      while (acc[id] >= 1) { acc[id] -= 1; spawn(id); }
+    }
+  }
+  const surf = BOT - S.level;
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    b.age += dt;
+    if (b.age < b.grow) b.r = .6 + (b.rmax - .6) * (b.age / b.grow);
+    else {
+      b.vy = Math.min(b.vy + 110 * dt, 55 + b.rmax * 12);
+      b.y -= b.vy * dt;
+      b.x += Math.sin(b.age * 7 + b.wob) * .18;
+    }
+    if (b.y - b.r <= surf || S.level <= 2) { b.node.remove(); bubbles.splice(i, 1); continue; }
+    b.node.setAttribute('cx', b.x.toFixed(1));
+    b.node.setAttribute('cy', b.y.toFixed(1));
+    b.node.setAttribute('r', b.r.toFixed(2));
+  }
+}
+
+/* ───── 확대 ───── */
+let vb = [0, 0, 1000, 600];
+function setZoom(z) {
+  S.zoom = z;
+  const to = z ? [310, 170, 500, 300] : [0, 0, 1000, 600], from = [...vb];
+  animate(550, e => { vb = from.map((f, i) => f + (to[i] - f) * e); svg.setAttribute('viewBox', vb.map(n => n.toFixed(2)).join(' ')); });
+  $('btnZoom').textContent = z ? '전체 보기' : '확대해서 보기';
+}
+$('btnZoom').addEventListener('click', () => setZoom(!S.zoom));
+
+/* ───── 10단계: 뒷정리 ───── */
+$('waste').addEventListener('click', () => {
+  if (S.step !== 10 || S.done || S.draining) return;
+  if (S.zoom) setZoom(false);
+  setDial('OFF');
+  ['black', 'red'].forEach(c => { S.clip[c].on = null; moveClip(c, REST[c]); });
+  ['zn', 'cu'].forEach(id => { S.inB[id] = null; tweenPos(id, { ...OBJ[id].home }, 650); });
+  drawCallouts(); refreshLabels();
+  S.draining = true;
+});
+
+/* ───── 결과 및 정리 ───── */
+function openSheet(v) { $('sheet').classList.toggle('open', v); }
+$('btnCloseSheet').addEventListener('click', () => openSheet(false));
+$('btnSheet').addEventListener('click', () => openSheet(!$('sheet').classList.contains('open')));
+
+/* ───── 단계 관리 ───── */
+function setDragMarks() {
+  const m = (id, v) => $(id).setAttribute('data-drag', v ? '1' : '0');
+  m('bottle', S.step === 4);
+  m('zn', S.step === 5 && S.inB.zn == null);
+  m('cu', S.step === 5 && S.inB.cu == null);
+  m('clip-black', S.step >= 7 && S.step <= 9);
+  m('clip-red', S.step >= 7 && S.step <= 9);
+  m('sandBig', S.step === 3);
+}
+function setBtn(ready, label) {
+  const b = $('btnNext');
+  b.classList.toggle('ready', ready);
+  b.setAttribute('aria-disabled', String(!ready));
+  if (label) b.textContent = label;
+}
+function enterStep(n) {
+  S.step = n; S.done = false; S.obs = 0; S.read = 0;
+  const st = STEPS[n];
+  $('gTag').textContent = st.tag;
+  $('gTag').className = 'tag ' + (st.cls || '');
+  $('gNum').textContent = n;
+  $('gBody').innerHTML = st.text;
+  $('gHint').innerHTML = st.hint;
+  $('gCount').textContent = `${n} / 10`;
+  $('progFill').style.width = ((n - 1) * 10) + '%';
+  setBtn(false, n === 10 ? '실험 끝' : '다음 단계');
+
+  show('safety', n === 1);
+  show('shelf', n <= 2);
+  show('sanding', n === 3);
+  show('targetLine', n === 4);
+  show('slotGuides', n === 5);
+  show('leads', n >= 7);
+  show('coil', n < 7);
+  show('waste', n === 10);
+  show('bottle', n < 10);
+  show('sand', n < 10);
+  $('btnZoom').disabled = n < 5;
+  $('btnSheet').hidden = n < 9;
+  if ((n === 7 || n === 9 || n === 10) && S.zoom) setZoom(false);
+  if (n === 3) { renderDirt(); placeSB(); }
+  if (n === 7) { placeClip('black'); placeClip('red'); }
+  refreshLabels(); setDragMarks();
+  if (n === 9) { openSheet(true); complete(true); }
+  else openSheet(false);
+}
+function complete(silent) {
+  if (S.done) return;
+  S.done = true;
+  setBtn(true);
+  if (!silent) toast(STEPS[S.step].ok);
+}
+function finish() {
+  S.finished = true;
+  $('progFill').style.width = '100%';
+  $('gTag').textContent = '완료'; $('gTag').className = 'tag mint';
+  $('gNum').textContent = '';
+  $('gBody').textContent = '볼타 전지 만들기 실험을 마쳤다.';
+  $('gHint').textContent = '결과 및 정리를 교과서에 모두 기록했는지 확인하자.';
+  $('gCount').textContent = '';
+  setBtn(true, '처음부터 다시');
+}
+$('btnNext').addEventListener('click', () => {
+  if (S.finished) { location.reload(); return; }
+  if (!S.done) { toast('이 단계를 먼저 마치자.'); return; }
+  if (S.step < 10) enterStep(S.step + 1); else finish();
+});
+$('btnReset').addEventListener('click', () => location.reload());
+
+/* ───── 매 프레임 ───── */
+let last = performance.now(), lcdT = 0;
+function loop(t) {
+  const dt = Math.min(.05, (t - last) / 1000); last = t;
+
+  if (S.pouring) {
+    S.level = Math.min(CFG.target, S.level + dt * 55);
+    drawLiquid();
+    if (S.level >= CFG.target) { S.pouring = false; if (S.step === 4) complete(); }
+  }
+  if (S.draining) {
+    S.level = Math.max(0, S.level - dt * 120);
+    drawLiquid();
+    if (S.level <= 0) { S.draining = false; clearBubbles(); if (S.step === 10) complete(); }
+  }
+  const st = $('stream');
+  if (S.pouring) {
+    const surf = BOT - S.level, w = Math.sin(t / 90) * 1.5;
+    st.setAttribute('d', `M${MOUTH.x} ${MOUTH.y} Q${MOUTH.x - 3 + w} ${(MOUTH.y + surf) / 2} ${MOUTH.x - 2} ${surf}`);
+    st.setAttribute('display', '');
+  } else st.setAttribute('display', 'none');
+
+  updateBubbles(dt);
+
+  if (S.step === 6 && S.zoom && !S.done) { S.obs += dt; if (S.obs >= 3) complete(); }
+  if (S.step === 8 && !S.done && S.dial === 'DC' && circuit()) { S.read += dt; if (S.read >= 2) complete(); }
+
+  lcdT += dt;
+  if (lcdT > .35) {
+    lcdT = 0;
+    if (S.dial === 'DC') lcdRefresh();
+    if (S.step === 8) $('gHint').innerHTML = lastSign < 0
+      ? '값 앞에 − 부호가 보이면 두 집게를 서로 바꿔 물려 보자.'
+      : STEPS[8].hint;
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ───── 시작 ───── */
+['black', 'red'].forEach(placeClip);
+setDial('OFF');
+drawLiquid();
+renderDirt();
+placeSB();
+enterStep(1);
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
